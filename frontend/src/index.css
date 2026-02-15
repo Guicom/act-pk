@@ -1,0 +1,34 @@
+@import "tailwindcss";
+
+/* Palette AU - Flat UI Colors (https://flatuicolors.com/palette/au) */
+:root {
+  --au-deep-cove: #130f40;
+  --au-deep-koamaru: #30336b;
+  --au-exodus-fruit: #686de0;
+  --au-turbo: #f9ca24;
+  --au-beekeeper: #f6e58d;
+  --au-spiced-nectarine: #ffbe76;
+  --au-pink-glamour: #ff7979;
+  --au-june-bud: #badc58;
+  --au-pure-apple: #6ab04c;
+  --au-coastal-breeze: #dff9fb;
+  --au-middle-blue: #7ed6df;
+  --au-greenland-green: #22a6b3;
+  --au-heliotrope: #e056fd;
+  --au-soaring-eagle: #95afc0;
+  --au-wizard-grey: #535c68;
+  --au-blurple: #4834d4;
+  --au-quince-jelly: #f0932b;
+}
+
+@layer base {
+  html {
+    @apply antialiased;
+  }
+  body {
+    font-family: 'Figtree', ui-sans-serif, system-ui, sans-serif;
+    min-height: 100vh;
+    background-color: #eef0f2;
+    color: var(--au-deep-koamaru);
+  }
+}
