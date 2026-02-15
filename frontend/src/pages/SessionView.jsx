@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useParams, useLocation, useNavigate } from 'react-router-dom'
 import { io } from 'socket.io-client'
+import { apiOrigin } from '../config'
 import Backlog from '../components/Backlog'
 import Voting from '../components/Voting'
 import InviteLink from '../components/InviteLink'
@@ -30,7 +31,7 @@ export default function SessionView() {
       return
     }
 
-    const s = io('', { path: '/socket.io' })
+    const s = io(apiOrigin || undefined, { path: '/socket.io' })
     s.on('connect', () => s.emit('join_session', { sessionId, participantId }))
     s.on('backlog_updated', (payload) => {
       setStories(payload.stories ?? [])

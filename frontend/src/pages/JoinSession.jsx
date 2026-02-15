@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
+import { apiUrl } from '../config'
 
 export default function JoinSession() {
   const navigate = useNavigate()
@@ -25,7 +26,7 @@ export default function JoinSession() {
     setLoading(true)
     const sid = sessionId.trim()
     try {
-      const res = await fetch(`/api/sessions/${sid}/join`, {
+      const res = await fetch(apiUrl(`/api/sessions/${sid}/join`), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ displayName: displayName.trim() }),

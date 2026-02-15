@@ -1,28 +1,38 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { apiUrl } from '../config'
 
 export default function Home() {
   const navigate = useNavigate()
   const [sprintName, setSprintName] = useState('')
   const [hostName, setHostName] = useState('')
+  const [error, setError] = useState('')
 
   async function handleCreateSession(e) {
     e.preventDefault()
-    const res = await fetch('/api/sessions', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        sprintName: sprintName.trim() || undefined,
-        name: hostName.trim() || 'Host',
-      }),
-    })
-    if (!res.ok) return
-    const { sessionId, participantId, sessionName } = await res.json()
-    sessionStorage.setItem(`participant_${sessionId}`, participantId)
-    if (sessionName) sessionStorage.setItem(`sessionName_${sessionId}`, sessionName)
-    navigate(`/session/${sessionId}`, {
-      state: { participantId, isHost: true, sessionName: sessionName || 'Sprint planning' },
-    })
+    setError('')
+    try {
+      const res = await fetch(apiUrl('/api/sessions'), {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          sprintName: sprintName.trim() || undefined,
+          name: hostName.trim() || 'Host',
+        }),
+      })
+      if (!res.ok) {
+        setError('Impossible de contacter le serveur. Vérifiez que le backend est déployé et que VITE_API_ORIGIN est configuré.')
+        return
+      }
+      const { sessionId, participantId, sessionName } = await res.json()
+      sessionStorage.setItem(`participant_${sessionId}`, participantId)
+      if (sessionName) sessionStorage.setItem(`sessionName_${sessionId}`, sessionName)
+      navigate(`/session/${sessionId}`, {
+        state: { participantId, isHost: true, sessionName: sessionName || 'Sprint planning' },
+      })
+    } catch {
+      setError('Impossible de contacter le serveur. Vérifiez que le backend est déployé.')
+    }
   }
 
   function handleJoin() {
@@ -49,6 +59,9 @@ export default function Home() {
             <h2 className="text-lg font-semibold text-[#130f40] mb-4">
               Créer un sprint planning
             </h2>
+            {error && (
+              <p className="text-sm text-[#c0392b] font-medium mb-3">{error}</p>
+            )}
             <div className="space-y-4">
               <label className="block">
                 <span className="text-sm font-medium text-[#535c68]">Nom du sprint planning</span>
