@@ -9,7 +9,7 @@ import {
   removeParticipant,
   addStory,
   reorderStories,
-  setStorySkipped,
+  removeStory,
   setVote,
   allVoted,
   clearVotesAndAdvance,
@@ -78,7 +78,7 @@ io.on('connection', (socket) => {
 
     // Envoyer l'état complet au client qui rejoint (backlog + participants + qui a voté)
     socket.emit('backlog_updated', {
-      stories: updated.stories,
+      stories: [...updated.stories],
       currentStoryIndex: updated.currentStoryIndex,
       participants: updated.participants,
       voterIds: Object.keys(updated.votes || {}),
@@ -98,7 +98,7 @@ io.on('connection', (socket) => {
     addStory(sessionId, title.trim());
     const updated = getSession(sessionId);
     io.to(`session:${sessionId}`).emit('backlog_updated', {
-      stories: updated.stories,
+      stories: [...updated.stories],
       currentStoryIndex: updated.currentStoryIndex,
     });
   });
@@ -111,7 +111,7 @@ io.on('connection', (socket) => {
     reorderStories(sessionId, storyIds);
     const updated = getSession(sessionId);
     io.to(`session:${sessionId}`).emit('backlog_updated', {
-      stories: updated.stories,
+      stories: [...updated.stories],
       currentStoryIndex: updated.currentStoryIndex,
     });
   });
@@ -121,12 +121,33 @@ io.on('connection', (socket) => {
     const session = getSession(sessionId);
     if (!session) return;
     if (socket.participantId !== session.hostParticipantId) return;
-    setStorySkipped(sessionId, storyId);
+
+    const { found, wasCurrentStory } = removeStory(sessionId, storyId);
+    if (!found) return;
+
     const updated = getSession(sessionId);
+
+    // Always broadcast the updated backlog (copie pour que le client reçoive un état frais)
     io.to(`session:${sessionId}`).emit('backlog_updated', {
-      stories: updated.stories,
+      stories: [...updated.stories],
       currentStoryIndex: updated.currentStoryIndex,
     });
+
+    if (wasCurrentStory) {
+      // Reset voter indicators
+      io.to(`session:${sessionId}`).emit('voters_updated', { voterIds: [] });
+
+      // Check if session is done or move to next story
+      if (updated.currentStoryIndex >= updated.stories.length) {
+        io.to(`session:${sessionId}`).emit('session_complete', {});
+      } else {
+        const nextStory = updated.stories[updated.currentStoryIndex];
+        io.to(`session:${sessionId}`).emit('current_story_updated', {
+          currentStoryIndex: updated.currentStoryIndex,
+          storyId: nextStory.id,
+        });
+      }
+    }
   });
 
   socket.on('vote_submitted', ({ sessionId, participantId, storyId, value }) => {
@@ -155,7 +176,7 @@ io.on('connection', (socket) => {
     const result = clearVotesAndAdvance(sessionId);
     const updated = getSession(sessionId);
     io.to(`session:${sessionId}`).emit('backlog_updated', {
-      stories: updated.stories,
+      stories: [...updated.stories],
       currentStoryIndex: updated.currentStoryIndex,
     });
     io.to(`session:${sessionId}`).emit('voters_updated', { voterIds: [] });

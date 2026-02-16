@@ -122,8 +122,7 @@ export default function Voting({
   }
 
   if (!currentStory && stories.length > 0) {
-    const nonSkipped = stories.filter((s) => !s.skipped)
-    if (nonSkipped.length === 0) return null
+    return null
   }
 
   if (!currentStory) {

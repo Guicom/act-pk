@@ -8,7 +8,7 @@ export default function Backlog({ socket, sessionId, stories, currentStoryIndex 
   const [csvData, setCsvData] = useState(null)
   const fileInputRef = useRef(null)
 
-  // N'afficher que les stories pas encore votées (à partir de la story en cours)
+  // N'afficher que les stories restantes (à partir de la story en cours)
   const visibleStories = stories.slice(Math.max(0, currentStoryIndex))
 
   function handleCsvFileChange(e) {
@@ -79,13 +79,9 @@ export default function Backlog({ socket, sessionId, stories, currentStoryIndex 
         {visibleStories.map((story, index) => (
           <li
             key={story.id}
-            className={`flex items-center justify-between gap-3 rounded-xl border px-4 py-3 transition ${
-              story.skipped
-                ? 'border-[#95afc0]/40 bg-gray-50 opacity-70'
-                : 'border-[#95afc0]/50 bg-gray-50/80 hover:border-[#686de0]/50 hover:bg-white'
-            }`}
+            className="flex items-center justify-between gap-3 rounded-xl border border-[#95afc0]/50 bg-gray-50/80 hover:border-[#686de0]/50 hover:bg-white px-4 py-3 transition"
           >
-            <span className={story.skipped ? 'text-[#535c68] line-through' : 'text-[#30336b]'}>
+            <span className="text-[#30336b]">
               {story.title}
             </span>
             {isHost && (
@@ -108,16 +104,14 @@ export default function Backlog({ socket, sessionId, stories, currentStoryIndex 
                 >
                   ↓
                 </button>
-                {!story.skipped && (
-                  <button
-                    type="button"
-                    onClick={() => skipStory(story.id)}
-                    title="Passer"
-                    className="ml-1 rounded-lg border border-[#95afc0]/70 bg-white px-3 py-2 text-sm text-[#535c68] transition hover:bg-[#686de0]/10 hover:text-[#30336b] hover:border-[#686de0]/50 focus:outline-none focus:ring-1 focus:ring-[#f9ca24]"
-                  >
-                    Passer
-                  </button>
-                )}
+                <button
+                  type="button"
+                  onClick={() => skipStory(story.id)}
+                  title="Passer"
+                  className="ml-1 rounded-lg border border-[#95afc0]/70 bg-white px-3 py-2 text-sm text-[#535c68] transition hover:bg-[#686de0]/10 hover:text-[#30336b] hover:border-[#686de0]/50 focus:outline-none focus:ring-1 focus:ring-[#f9ca24]"
+                >
+                  Passer
+                </button>
               </div>
             )}
           </li>

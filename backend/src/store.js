@@ -22,7 +22,6 @@ export const sessions = new Map();
  * @typedef {Object} Story
  * @property {string} id
  * @property {string} title
- * @property {boolean} skipped
  * @property {number} order
  */
 
@@ -111,7 +110,6 @@ export function addStory(sessionId, title) {
   const story = {
     id: shortId(),
     title,
-    skipped: false,
     order,
   };
   session.stories.push(story);
@@ -138,14 +136,31 @@ export function reorderStories(sessionId, storyIds) {
 }
 
 /**
+ * Skip a story: remove it from the stories array.
+ * If it's before or at currentStoryIndex, adjust the index so the current story stays the same.
  * @param {string} sessionId
  * @param {string} storyId
+ * @returns {{ found: boolean, wasCurrentStory: boolean }}
  */
-export function setStorySkipped(sessionId, storyId) {
+export function removeStory(sessionId, storyId) {
   const session = sessions.get(sessionId);
-  if (!session) return;
-  const story = session.stories.find((s) => s.id === storyId);
-  if (story) story.skipped = true;
+  if (!session) return { found: false, wasCurrentStory: false };
+  const idx = session.stories.findIndex((s) => s.id === storyId);
+  if (idx === -1) return { found: false, wasCurrentStory: false };
+
+  const wasCurrentStory = idx === session.currentStoryIndex;
+  session.stories.splice(idx, 1);
+
+  if (wasCurrentStory) {
+    // Clear votes since we're moving away from this story
+    session.votes = {};
+    // currentStoryIndex now naturally points to the next story
+  } else if (idx < session.currentStoryIndex) {
+    // Story was before current, adjust index to keep pointing at the same story
+    session.currentStoryIndex--;
+  }
+
+  return { found: true, wasCurrentStory };
 }
 
 /**
@@ -170,7 +185,7 @@ export function allVoted(sessionId) {
 }
 
 /**
- * Clear votes and advance to next non-skipped story.
+ * Clear votes and advance to the next story.
  * @param {string} sessionId
  * @returns {{ done: boolean, currentStoryIndex: number, storyId?: string }}
  */
@@ -178,11 +193,7 @@ export function clearVotesAndAdvance(sessionId) {
   const session = sessions.get(sessionId);
   if (!session) return { done: true, currentStoryIndex: -1 };
   session.votes = {};
-  const stories = session.stories.filter((s) => !s.skipped);
-  let nextIndex = session.currentStoryIndex + 1;
-  while (nextIndex < session.stories.length && session.stories[nextIndex].skipped) {
-    nextIndex++;
-  }
+  const nextIndex = session.currentStoryIndex + 1;
   session.currentStoryIndex = nextIndex;
   if (nextIndex >= session.stories.length) {
     return { done: true, currentStoryIndex: nextIndex };

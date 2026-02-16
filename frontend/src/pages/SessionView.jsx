@@ -34,8 +34,9 @@ export default function SessionView() {
     const s = io(apiOrigin || undefined, { path: '/socket.io' })
     s.on('connect', () => s.emit('join_session', { sessionId, participantId }))
     s.on('backlog_updated', (payload) => {
-      setStories(payload.stories ?? [])
-      if (payload.currentStoryIndex !== undefined) setCurrentStoryIndex(payload.currentStoryIndex)
+      const newStories = Array.isArray(payload.stories) ? [...payload.stories] : []
+      setStories(newStories)
+      if (payload.currentStoryIndex !== undefined) setCurrentStoryIndex(Number(payload.currentStoryIndex))
       if (payload.participants !== undefined) setParticipants(payload.participants)
       if (payload.voterIds !== undefined) setVoterIds(payload.voterIds)
     })
@@ -46,7 +47,7 @@ export default function SessionView() {
       setVotesRevealed(payload)
     })
     s.on('current_story_updated', (payload) => {
-      setCurrentStoryIndex(payload.currentStoryIndex ?? currentStoryIndex)
+      if (payload.currentStoryIndex !== undefined) setCurrentStoryIndex(Number(payload.currentStoryIndex))
       setVotesRevealed(null)
     })
     s.on('session_complete', () => {
